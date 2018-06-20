@@ -47,6 +47,9 @@ server.post('/api/messages', (req, res) => {
             else {
                 yield context.sendActivity(`You are correct!`);
                 yield context.sendActivity(`You found the right answer in ${count} tries!`);
+                yield context.sendActivity('Welcome to the number guessing game! Guess a number from 1-20.');
+                state.randNum = Math.floor(Math.random() * 20 + 1);
+                state.count = 0;
             }
         }
     }));

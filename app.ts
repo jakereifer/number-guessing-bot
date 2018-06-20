@@ -23,6 +23,7 @@ const userState = new UserState(storage);
 interface EchoState {
     count: number;
     randNum: number;
+    playAgain: boolean;
 }
 
 // Add conversation state middleware
@@ -49,7 +50,9 @@ server.post('/api/messages', (req, res) => {
             else {
                 await context.sendActivity(`You are correct!`);
                 await context.sendActivity(`You found the right answer in ${count} tries!`);
-                
+                await context.sendActivity('Welcome to the number guessing game! Guess a number from 1-20.');
+                state.randNum = Math.floor(Math.random()*20+1);
+                state.count = 0;
             }
         }
     });
