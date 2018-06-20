@@ -1,5 +1,6 @@
-import { BotFrameworkAdapter, MemoryStorage, ConversationState } from 'botbuilder';
+import { BotFrameworkAdapter, MemoryStorage, ConversationState, UserState, BotState } from 'botbuilder';
 import * as restify from 'restify';
+import { STATUS_CODES } from 'http';
 
 // Create server
 let server = restify.createServer();
@@ -9,13 +10,19 @@ server.listen(process.env.port || process.env.PORT || 3978, function () {
 
 // Create adapter
 const adapter = new BotFrameworkAdapter({ 
-    appId: process.env.MICROSOFT_APP_ID, 
+    appId: process.env.MICROSOFT_APP_ID,
     appPassword: process.env.MICROSOFT_APP_PASSWORD 
 });
+
+// Add state middleware
+const storage = new MemoryStorage();
+const convoState = new ConversationState(storage);
+const userState = new UserState(storage);
 
 // Define conversation state shape
 interface EchoState {
     count: number;
+    randNum: number;
 }
 
 // Add conversation state middleware
@@ -26,12 +33,24 @@ adapter.use(conversationState);
 server.post('/api/messages', (req, res) => {
     // Route received request to adapter for processing
     adapter.processActivity(req, res, async (context) => {
+        const state = conversationState.get(context);
+        if (context.activity.type == 'conversationUpdate' && context.activity.membersAdded[0].name !== 'Bot') {
+            await context.sendActivity('Welcome to the number guessing game! Guess a number from 1-20.');
+        }
         if (context.activity.type === 'message') {
-            const state = conversationState.get(context);
-            const count = state.count === undefined ? state.count = 0 : ++state.count;
-            await context.sendActivity(`You said "${context.activity.text}"`);
-        } else {
-            await context.sendActivity(`[${context.activity.type} event detected]`);
+            const randNum = state.randNum === undefined ? state.randNum = Math.floor(Math.random()*20+1) : state.randNum = state.randNum;
+            const count = state.count === undefined ? state.count = 1 : ++state.count;
+            if (parseInt(context.activity.text) < randNum) {
+                await context.sendActivity(`the number is higher`);
+            }
+            else if (parseInt(context.activity.text) > randNum) {
+                await context.sendActivity(`the number is lower`);
+            }
+            else {
+                await context.sendActivity(`You are correct!`);
+                await context.sendActivity(`You found the right answer in ${count} tries!`);
+                
+            }
         }
     });
 });

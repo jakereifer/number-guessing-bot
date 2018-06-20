@@ -20,6 +20,10 @@ const adapter = new botbuilder_1.BotFrameworkAdapter({
     appId: process.env.MICROSOFT_APP_ID,
     appPassword: process.env.MICROSOFT_APP_PASSWORD
 });
+// Add state middleware
+const storage = new botbuilder_1.MemoryStorage();
+const convoState = new botbuilder_1.ConversationState(storage);
+const userState = new botbuilder_1.UserState(storage);
 // Add conversation state middleware
 const conversationState = new botbuilder_1.ConversationState(new botbuilder_1.MemoryStorage());
 adapter.use(conversationState);
@@ -27,13 +31,23 @@ adapter.use(conversationState);
 server.post('/api/messages', (req, res) => {
     // Route received request to adapter for processing
     adapter.processActivity(req, res, (context) => __awaiter(this, void 0, void 0, function* () {
-        if (context.activity.type === 'message') {
-            const state = conversationState.get(context);
-            const count = state.count === undefined ? state.count = 0 : ++state.count;
-            yield context.sendActivity(`You said "${context.activity.text}"`);
+        const state = conversationState.get(context);
+        if (context.activity.type == 'conversationUpdate' && context.activity.membersAdded[0].name !== 'Bot') {
+            yield context.sendActivity('Welcome to the number guessing game! Guess a number from 1-20.');
         }
-        else {
-            yield context.sendActivity(`[${context.activity.type} event detected]`);
+        if (context.activity.type === 'message') {
+            const randNum = state.randNum === undefined ? state.randNum = Math.floor(Math.random() * 20 + 1) : state.randNum = state.randNum;
+            const count = state.count === undefined ? state.count = 1 : ++state.count;
+            if (parseInt(context.activity.text) < randNum) {
+                yield context.sendActivity(`the number is higher`);
+            }
+            else if (parseInt(context.activity.text) > randNum) {
+                yield context.sendActivity(`the number is lower`);
+            }
+            else {
+                yield context.sendActivity(`You are correct!`);
+                yield context.sendActivity(`You found the right answer in ${count} tries!`);
+            }
         }
     }));
 });
