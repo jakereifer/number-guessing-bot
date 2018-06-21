@@ -27,13 +27,16 @@ const userState = new botbuilder_1.UserState(storage);
 // Add conversation state middleware
 const conversationState = new botbuilder_1.ConversationState(new botbuilder_1.MemoryStorage());
 adapter.use(conversationState);
+const foo = (n) => {
+    console.log(n);
+};
 // Listen for incoming requests 
 server.post('/api/messages', (req, res) => {
     // Route received request to adapter for processing
     adapter.processActivity(req, res, (context) => __awaiter(this, void 0, void 0, function* () {
         const state = conversationState.get(context);
-        if (context.activity.type == 'conversationUpdate' && context.activity.membersAdded[0].name !== 'Bot') {
-            yield context.sendActivity('Welcome to the number guessing game! Guess a number from 1-20.');
+        if (context.activity.type === 'conversationUpdate' && context.activity.membersAdded[0].name !== 'Bot') {
+            return context.sendActivity('Welcome to the number guessing game! Guess a number from 1-20.');
         }
         if (context.activity.type === 'message') {
             const randNum = state.randNum === undefined ? state.randNum = Math.floor(Math.random() * 20 + 1) : state.randNum = state.randNum;

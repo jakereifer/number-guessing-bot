@@ -20,23 +20,27 @@ const convoState = new ConversationState(storage);
 const userState = new UserState(storage);
 
 // Define conversation state shape
-interface EchoState {
+interface GameState {
     count: number;
     randNum: number;
     playAgain: boolean;
 }
 
 // Add conversation state middleware
-const conversationState = new ConversationState<EchoState>(new MemoryStorage());
+const conversationState = new ConversationState<GameState>(new MemoryStorage());
 adapter.use(conversationState);
+
+const foo = (n:number) => {
+    console.log(n);
+}
 
 // Listen for incoming requests 
 server.post('/api/messages', (req, res) => {
     // Route received request to adapter for processing
     adapter.processActivity(req, res, async (context) => {
         const state = conversationState.get(context);
-        if (context.activity.type == 'conversationUpdate' && context.activity.membersAdded[0].name !== 'Bot') {
-            await context.sendActivity('Welcome to the number guessing game! Guess a number from 1-20.');
+        if (context.activity.type === 'conversationUpdate' && context.activity.membersAdded[0].name !== 'Bot') {
+            return context.sendActivity('Welcome to the number guessing game! Guess a number from 1-20.');
         }
         if (context.activity.type === 'message') {
             const randNum = state.randNum === undefined ? state.randNum = Math.floor(Math.random()*20+1) : state.randNum = state.randNum;
